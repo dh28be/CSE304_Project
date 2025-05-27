@@ -161,10 +161,10 @@ struct Data {
   vector<Component> ground_truth;
   string network_path;
   string community_path;
-  int num_comp;
+  int num_clusters;
 
-  Data(string network_path, string community_path, int num_comp) : network_path(network_path), community_path(community_path), num_comp(num_comp) {
-    ground_truth.resize(num_comp+1);
+  Data(string network_path, string community_path, int num_clusters) : network_path(network_path), community_path(community_path), num_clusters(num_clusters) {
+    ground_truth.resize(num_clusters+1);
   }
 
   vector<vector<pii>> read(int n, int &m) {
@@ -172,8 +172,12 @@ struct Data {
     vector<vector<pii>> adj(n+1);
     int u, v;
 
+    set<pii> check;
     ifstream network(network_path);
     while(network >> u >> v) {
+      if(u > v) swap(u, v);
+      if(check.find({u, v}) != check.end()) continue;
+      check.insert({u, v});
       adj[u].push_back({v, 1});
       adj[v].push_back({u, 1});
       m++;
@@ -200,7 +204,7 @@ struct Data {
   }
 
   void add_edges2gt_all(vector<vector<pii>> &adj) {
-    for(int i = 1; i <= num_comp; ++i)
+    for(int i = 1; i <= num_clusters; ++i)
       add_edges2gt(ground_truth[i], adj);
   }
 };
@@ -378,7 +382,7 @@ struct Clustering {
   }
 
   double modularity_threshold(int size) {
-    return 0.03 + 0.05/sqrt(size);
+    return 0.025*sqrt(size);
   }
 
   void clustering() {
@@ -420,13 +424,13 @@ string fill50(string str) {
 }
 
 int main() {
-	int dolphin_n = 62, dolphin_m, dolphin_gt_num_comp = 2;
-  Data dolphin("CS-DM/dolphin/network.dat", "CS-DM/dolphin/community.dat", dolphin_gt_num_comp);
+	int dolphin_n = 62, dolphin_m, dolphin_gt_num_clusters = 2;
+  Data dolphin("CS-DM/dolphin/network.dat", "CS-DM/dolphin/community.dat", dolphin_gt_num_clusters);
 	auto dolphin_adj = dolphin.read(dolphin_n, dolphin_m);
   dolphin.add_edges2gt_all(dolphin_adj);
   
   Clustering dolphin_gt(dolphin_n, dolphin_m, dolphin_adj);
-  for(int i = 1; i <= dolphin_gt_num_comp; ++i)
+  for(int i = 1; i <= dolphin_gt_num_clusters; ++i)
     dolphin_gt.clusters.push_back(dolphin.ground_truth[i]);
   double dolphin_gt_modularity = dolphin_gt.compute_all_modularity();
 
@@ -437,24 +441,24 @@ int main() {
   for(auto &it : dolphin_exp.clusters)
     dolphin_exp_modularity += it.modularity;
 
-  string dolphin_gt_num_comp_str = fill50("dolphin ground truth # components:");
-  string dolphin_exp_num_comp_str = fill50("dolphin experiments # components:");
+  string dolphin_gt_num_clusters_str = fill50("dolphin ground truth # clusters:");
+  string dolphin_exp_num_clusters_str = fill50("dolphin experiments # clusters:");
   string dolphin_gt_modularity_str = fill50("dolphin ground truth modularity:");
   string dolphin_exp_modularity_str = fill50("dolphin experiments modularity:");
-  cout << dolphin_gt_num_comp_str << dolphin_gt_num_comp << '\n';
-  cout << dolphin_exp_num_comp_str << dolphin_exp.clusters.size() << '\n';
+  cout << dolphin_gt_num_clusters_str << dolphin_gt_num_clusters << '\n';
+  cout << dolphin_exp_num_clusters_str << dolphin_exp.clusters.size() << '\n';
   cout << dolphin_gt_modularity_str << dolphin_gt_modularity << '\n';
   cout << dolphin_exp_modularity_str << dolphin_exp_modularity << '\n';
   cout << "\n\n";
 
 
-  int football_n = 115, football_m, football_gt_num_comp = 12;
-  Data football("CS-DM/football/network.dat", "CS-DM/football/community.dat", football_gt_num_comp);
+  int football_n = 115, football_m, football_gt_num_clusters = 12;
+  Data football("CS-DM/football/network.dat", "CS-DM/football/community.dat", football_gt_num_clusters);
 	auto football_adj = football.read(football_n, football_m);
   football.add_edges2gt_all(football_adj);
   
   Clustering football_gt(football_n, football_m, football_adj);
-  for(int i = 1; i <= football_gt_num_comp; ++i)
+  for(int i = 1; i <= football_gt_num_clusters; ++i)
     football_gt.clusters.push_back(football.ground_truth[i]);
   double football_gt_modularity = football_gt.compute_all_modularity();
 
@@ -465,24 +469,24 @@ int main() {
   for(auto &it : football_exp.clusters)
     football_exp_modularity += it.modularity;
 
-  string football_gt_num_comp_str = fill50("football ground truth # components:");
-  string football_exp_num_comp_str = fill50("football experiments # components:");
+  string football_gt_num_clusters_str = fill50("football ground truth # clusters:");
+  string football_exp_num_clusters_str = fill50("football experiments # clusters:");
   string football_gt_modularity_str = fill50("football ground truth modularity:");
   string football_exp_modularity_str = fill50("football experiments modularity:");
-  cout << football_gt_num_comp_str << football_gt_num_comp << '\n';
-  cout << football_exp_num_comp_str << football_exp.clusters.size() << '\n';
+  cout << football_gt_num_clusters_str << football_gt_num_clusters << '\n';
+  cout << football_exp_num_clusters_str << football_exp.clusters.size() << '\n';
   cout << football_gt_modularity_str << football_gt_modularity << '\n';
   cout << football_exp_modularity_str << football_exp_modularity << '\n';
   cout << "\n\n";
 
 
-  int karate_n = 34, karate_m, karate_gt_num_comp = 2;
-  Data karate("CS-DM/karate/network.dat", "CS-DM/karate/community.dat", karate_gt_num_comp);
+  int karate_n = 34, karate_m, karate_gt_num_clusters = 2;
+  Data karate("CS-DM/karate/network.dat", "CS-DM/karate/community.dat", karate_gt_num_clusters);
 	auto karate_adj = karate.read(karate_n, karate_m);
   karate.add_edges2gt_all(karate_adj);
   
   Clustering karate_gt(karate_n, karate_m, karate_adj);
-  for(int i = 1; i <= karate_gt_num_comp; ++i)
+  for(int i = 1; i <= karate_gt_num_clusters; ++i)
     karate_gt.clusters.push_back(karate.ground_truth[i]);
   double karate_gt_modularity = karate_gt.compute_all_modularity();
 
@@ -493,24 +497,24 @@ int main() {
   for(auto &it : karate_exp.clusters)
     karate_exp_modularity += it.modularity;
 
-  string karate_gt_num_comp_str = fill50("karate ground truth # components:");
-  string karate_exp_num_comp_str = fill50("karate experiments # components:");
+  string karate_gt_num_clusters_str = fill50("karate ground truth # clusters:");
+  string karate_exp_num_clusters_str = fill50("karate experiments # clusters:");
   string karate_gt_modularity_str = fill50("karate ground truth modularity:");
   string karate_exp_modularity_str = fill50("karate experiments modularity:");
-  cout << karate_gt_num_comp_str << karate_gt_num_comp << '\n';
-  cout << karate_exp_num_comp_str << karate_exp.clusters.size() << '\n';
+  cout << karate_gt_num_clusters_str << karate_gt_num_clusters << '\n';
+  cout << karate_exp_num_clusters_str << karate_exp.clusters.size() << '\n';
   cout << karate_gt_modularity_str << karate_gt_modularity << '\n';
   cout << karate_exp_modularity_str << karate_exp_modularity << '\n';
   cout << "\n\n";
 
 
-  int polblogs_n = 1224, polblogs_m, polblogs_gt_num_comp = 2;
-  Data polblogs("CS-DM/polblogs/network.dat", "CS-DM/polblogs/community.dat", polblogs_gt_num_comp);
+  int polblogs_n = 1224, polblogs_m, polblogs_gt_num_clusters = 2;
+  Data polblogs("CS-DM/polblogs/network.dat", "CS-DM/polblogs/community.dat", polblogs_gt_num_clusters);
 	auto polblogs_adj = polblogs.read(polblogs_n, polblogs_m);
   polblogs.add_edges2gt_all(polblogs_adj);
   
   Clustering polblogs_gt(polblogs_n, polblogs_m, polblogs_adj);
-  for(int i = 1; i <= dolphin_gt_num_comp; ++i)
+  for(int i = 1; i <= dolphin_gt_num_clusters; ++i)
     polblogs_gt.clusters.push_back(polblogs.ground_truth[i]);
   double polblogs_gt_modularity = polblogs_gt.compute_all_modularity();
 
@@ -521,12 +525,12 @@ int main() {
   for(auto &it : polblogs_exp.clusters)
     polblogs_exp_modularity += it.modularity;
 
-  string polblogs_gt_num_comp_str = fill50("polblogs ground truth # components:");
-  string polblogs_exp_num_comp_str = fill50("polblogs experiments # components:");
+  string polblogs_gt_num_clusters_str = fill50("polblogs ground truth # clusters:");
+  string polblogs_exp_num_clusters_str = fill50("polblogs experiments # clusters:");
   string polblogs_gt_modularity_str = fill50("polblogs ground truth modularity:");
   string polblogs_exp_modularity_str = fill50("polblogs experiments modularity:");
-  cout << polblogs_gt_num_comp_str << polblogs_gt_num_comp << '\n';
-  cout << polblogs_exp_num_comp_str << polblogs_exp.clusters.size() << '\n';
+  cout << polblogs_gt_num_clusters_str << polblogs_gt_num_clusters << '\n';
+  cout << polblogs_exp_num_clusters_str << polblogs_exp.clusters.size() << '\n';
   cout << polblogs_gt_modularity_str << polblogs_gt_modularity << '\n';
   cout << polblogs_exp_modularity_str << polblogs_exp_modularity << '\n';
 
